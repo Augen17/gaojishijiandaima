@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            overflow: hidden;
+            transform: scale(0.8);
+        }
+
+        .weather-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .location {
+            font-size: 24px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        .icon {
+            font-size: 120px;
+            line-height: 0.8;
+        }
+
+        .temp {
+            font-size: 60px;
+            font-weight: 300;
+            margin-bottom: 15px;
+        }
+
+        .forecast-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin: 8px 0;
+        }
+
+        .forecast-icon {
+            font-size: 40px;
+        }
+
+        .forecast-temp {
+            font-size: 22px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="weather-container">
+        <div class="location">浙江省金华市义乌市</div>
+        <div id="current">
+            <div class="icon"></div>
+            <div class="temp"></div>
+        </div>
+        <div id="forecast"></div>
+    </div>
+
+    <script>
+        // 义乌精确坐标 (北苑街道)
+        const YIWU_COORDS = { 
+            lat: 29.3414, 
+            lng: 120.0762 
+        };
+
+        const WEATHER_ICONS = {
+            'Clear': '☀️',
+            'Clouds': '☁️',
+            'Rain': '�️',
+            'Thunderstorm': '⛈️',
+            'Snow': '❄️'
+        };
+
+        window.onload = async () => {
+            try {
+                const [current, forecast] = await Promise.all([
+                    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${YIWU_COORDS.lat}&lon=${YIWU_COORDS.lng}&appid=eacbfc53b389b364ff36170551ca70a8&units=metric`),
+                    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${YIWU_COORDS.lat}&lon=${YIWU_COORDS.lng}&appid=eacbfc53b389b364ff36170551ca70a8&units=metric`)
+                ]);
+                
+                updateDisplay(
+                    await current.json(),
+                    (await forecast.json()).list
+                );
+            } catch(error) {
+                console.error('数据加载失败');
+            }
+        };
+
+        function updateDisplay(currentData, forecastData) {
+            // 当前天气
+            document.querySelector('.icon').textContent = 
+                WEATHER_ICONS[currentData.weather.main] || '�️';
+            document.querySelector('.temp').textContent = 
+                `${Math.round(currentData.main.temp)}°`;
+
+            // 处理预报数据
+            const dailyData = {};
+            forecastData.forEach(item => {
+                const date = new Date(item.dt * 1000);
+                const dayKey = date.getDate();
+                
+                if (!dailyData[dayKey]) {
+                    dailyData[dayKey] = {
+                        min: item.main.temp,
+                        max: item.main.temp,
+                        icon: item.weather.main
+                    };
+                } else {
+                    dailyData[dayKey].min = Math.min(dailyData[dayKey].min, item.main.temp);
+                    dailyData[dayKey].max = Math.max(dailyData[dayKey].max, item.main.temp);
+                }
+            });
+
+            // 显示预报
+            document.getElementById('forecast').innerHTML = 
+                Object.values(dailyData)
+                    .slice(1, 6)
+                    .map(day => `
+                        <div class="forecast-item">
+                            <div class="forecast-icon">${WEATHER_ICONS[day.icon] || '�️'}</div>
+                            <div class="forecast-temp">${Math.round(day.min)}/${Math.round(day.max)}°</div>
+                        </div>
+                    `).join('');
+        }
+    </script>
+</body>
+</html>
