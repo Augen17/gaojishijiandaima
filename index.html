@@ -21,12 +21,6 @@
             gap: 5px;
         }
 
-        .location {
-            font-size: 24px;
-            color: #444;
-            margin-bottom: 10px;
-        }
-
         .icon {
             font-size: 120px;
             line-height: 0.8;
@@ -58,7 +52,6 @@
 </head>
 <body>
     <div class="weather-container">
-        <div class="location">浙江省金华市义乌市</div>
         <div id="current">
             <div class="icon"></div>
             <div class="temp"></div>
@@ -67,20 +60,22 @@
     </div>
 
     <script>
-        // 义乌精确坐标 (北苑街道)
+        // 固定义乌坐标
         const YIWU_COORDS = { 
             lat: 29.3414, 
             lng: 120.0762 
         };
 
+        // 天气图标映射
         const WEATHER_ICONS = {
             'Clear': '☀️',
             'Clouds': '☁️',
-            'Rain': '�️',
+            'Rain': '🌧️',
             'Thunderstorm': '⛈️',
             'Snow': '❄️'
         };
 
+        // 页面加载时获取数据
         window.onload = async () => {
             try {
                 const [current, forecast] = await Promise.all([
@@ -97,10 +92,11 @@
             }
         };
 
+        // 更新显示内容
         function updateDisplay(currentData, forecastData) {
             // 当前天气
             document.querySelector('.icon').textContent = 
-                WEATHER_ICONS[currentData.weather.main] || '�️';
+                WEATHER_ICONS[currentData.weather.main] || '🌤️';
             document.querySelector('.temp').textContent = 
                 `${Math.round(currentData.main.temp)}°`;
 
@@ -125,10 +121,10 @@
             // 显示预报
             document.getElementById('forecast').innerHTML = 
                 Object.values(dailyData)
-                    .slice(1, 6)
+                    .slice(1, 6) // 显示未来5天
                     .map(day => `
                         <div class="forecast-item">
-                            <div class="forecast-icon">${WEATHER_ICONS[day.icon] || '�️'}</div>
+                            <div class="forecast-icon">${WEATHER_ICONS[day.icon] || '🌤️'}</div>
                             <div class="forecast-temp">${Math.round(day.min)}/${Math.round(day.max)}°</div>
                         </div>
                     `).join('');
