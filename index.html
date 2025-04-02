@@ -60,13 +60,25 @@
             overflow: hidden;
             font-size: 24px;
             margin: 0 2px;
+            perspective: 200px;
         }
         .flip-digit {
             position: absolute;
             width: 100%;
+            height: 100%;
             text-align: center;
             line-height: 40px;
-            transition: transform 0.5s ease;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+        .flip-digit.top {
+            transform-origin: bottom;
+            z-index: 1;
+        }
+        .flip-digit.bottom {
+            transform-origin: top;
+            transform: rotateX(90deg);
+            z-index: 2;
         }
         .flip-container {
             display: flex;
@@ -263,28 +275,51 @@
             return Gan[(year - 4) % 10] + Zhi[(year - 4) % 12];
         }
 
-        // 更新时间函数（带翻页效果）
-        function updateTimeWithFlip(elementId, newValue, oldValue) {
+        // 创建翻页时钟数字
+        function createFlipDigit(elementId, value) {
             const element = document.getElementById(elementId);
+            value = value.toString().padStart(2, '0');
+            
+            element.innerHTML = `
+                <div class="flip-digit top">${value}</div>
+                <div class="flip-digit bottom">${value}</div>
+            `;
+        }
 
+        // 更新翻页时钟数字
+        function updateFlipDigit(elementId, newValue, oldValue) {
+            const element = document.getElementById(elementId);
+            
             // 如果值没变化，直接返回
             if (newValue === oldValue) return;
-
+            
             // 确保值是两位数
             newValue = newValue.toString().padStart(2, '0');
             oldValue = oldValue.toString().padStart(2, '0');
-
-            // 创建翻页动画
-            element.innerHTML = `
-                <div class="flip-digit" style="transform: translateY(-40px);">${oldValue}</div>
-                <div class="flip-digit" style="transform: translateY(0px);">${newValue}</div>
-            `;
-
+            
+            // 创建新的数字元素
+            const newTop = document.createElement('div');
+            newTop.className = 'flip-digit top';
+            newTop.textContent = oldValue;
+            
+            const newBottom = document.createElement('div');
+            newBottom.className = 'flip-digit bottom';
+            newBottom.textContent = newValue;
+            
+            // 添加到元素中
+            element.innerHTML = '';
+            element.appendChild(newTop);
+            element.appendChild(newBottom);
+            
+            // 开始动画
+            setTimeout(() => {
+                newTop.style.transform = 'rotateX(-90deg)';
+                newBottom.style.transform = 'rotateX(0deg)';
+            }, 10);
+            
             // 动画结束后更新为静态显示
             setTimeout(() => {
-                element.innerHTML = `
-                    <div class="flip-digit">${newValue}</div>
-                `;
+                createFlipDigit(elementId, newValue);
             }, 500);
         }
 
@@ -295,12 +330,19 @@
             start.setHours(0, 0, 0, 0);
             const end = new Date(endDate);
             end.setHours(0, 0, 0, 0);
-
+            
             // 计算完整天数差
             const diffTime = end - start;
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
+            
             return diffDays > 0 ? diffDays : 0;
+        }
+
+        // 获取本月最后一天
+        function getLastDayOfMonth(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            return new Date(year, month, 0);
         }
 
         // 更新日期时间函数
@@ -331,14 +373,21 @@
             const oldMinutes = document.getElementById('minutes').textContent || '00';
             const oldSeconds = document.getElementById('seconds').textContent || '00';
 
-            // 更新带翻页效果
-            updateTimeWithFlip('hours', hours, oldHours);
-            updateTimeWithFlip('minutes', minutes, oldMinutes);
-            updateTimeWithFlip('seconds', seconds, oldSeconds);
+            // 如果是第一次运行，创建初始数字
+            if (oldHours === '00' && oldMinutes === '00' && oldSeconds === '00') {
+                createFlipDigit('hours', hours);
+                createFlipDigit('minutes', minutes);
+                createFlipDigit('seconds', seconds);
+            } else {
+                // 更新带翻页效果
+                updateFlipDigit('hours', hours, oldHours);
+                updateFlipDigit('minutes', minutes, oldMinutes);
+                updateFlipDigit('seconds', seconds, oldSeconds);
+            }
 
-            // 倒计时计算（去掉当天）
+            // 倒计时计算（修正版）
             const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const endOfMonth = getLastDayOfMonth(now);
             const endOfWeek = new Date(now);
             endOfWeek.setDate(now.getDate() + (7 - now.getDay()));
             endOfWeek.setHours(0, 0, 0, 0);
