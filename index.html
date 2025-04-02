@@ -1,62 +1,328 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日期时间显示</title>
     <style>
-        .weather-card {
-            width: 110px;
-            height: 270px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            padding: 10px;
+        body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            width: 600px;
+            height: 130px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-
-        .day-item {
-            height: 90px;
+        .panel {
+            flex: 1;
+            padding: 10px;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
-            justify-content: space-between;
-            margin: 3px 0;
+            border-right: 1px solid #eee;
         }
-
-        .date {
-            font-size: 12px;
-            color: #333;
+        .panel:last-child {
+            border-right: none;
         }
-
-        .weather-icon {
-            width: 30px;
-            height: 30px;
-            font-size: 24px;
-        }
-
-        .temp {
+        .title {
             font-size: 14px;
             color: #666;
+            margin-bottom: 5px;
+        }
+        .content {
+            font-size: 18px;
             font-weight: bold;
+            color: #333;
+        }
+        .flip-clock {
+            display: inline-flex;
+            position: relative;
+            width: 24px;
+            height: 30px;
+            overflow: hidden;
+        }
+        .flip-digit {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 30px;
+            transition: transform 0.5s ease;
+        }
+        .flip-container {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .flip-separator {
+            margin: 0 2px;
         }
     </style>
 </head>
 <body>
-    <div class="weather-card">
-        <div class="day-item">
-            <div class="date">3月18日 周二</div>
-            <div class="weather-icon">☀️</div>
-            <div class="temp">4°C～19°C</div>
+    <div class="container">
+        <div class="panel">
+            <div class="title">公历日期</div>
+            <div class="content" id="gregorian-date"></div>
+            <div class="title">星期</div>
+            <div class="content" id="week-day"></div>
         </div>
-        <div class="day-item">
-            <div class="date">3月19日 周三</div>
-            <div class="weather-icon">🌤️</div>
-            <div class="temp">4°C～16°C</div>
+        <div class="panel">
+            <div class="title">农历日期</div>
+            <div class="content" id="lunar-date"></div>
+            <div class="title">农历年份</div>
+            <div class="content" id="lunar-year"></div>
         </div>
-        <div class="day-item">
-            <div class="date">3月20日 周四</div>
-            <div class="weather-icon">🌤️</div>
-            <div class="temp">6°C～19°C</div>
+        <div class="panel">
+            <div class="title">当前时间</div>
+            <div class="content">
+                <div class="flip-container">
+                    <div class="flip-clock" id="hours"></div>
+                    <span class="flip-separator">:</span>
+                    <div class="flip-clock" id="minutes"></div>
+                    <span class="flip-separator">:</span>
+                    <div class="flip-clock" id="seconds"></div>
+                </div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="title">今年倒计时</div>
+            <div class="content" id="year-countdown"></div>
+            <div class="title">本月剩余</div>
+            <div class="content" id="month-remaining"></div>
+        </div>
+        <div class="panel">
+            <div class="title">本周剩余</div>
+            <div class="content" id="week-remaining"></div>
+            <div class="title">今年已过</div>
+            <div class="content" id="year-passed"></div>
         </div>
     </div>
+
+    <script>
+        // 更准确的农历数据
+        const lunarInfo = [
+            0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+            0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+            0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+            0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+            0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
+            0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5d0, 0x14573, 0x052d0, 0x0a9a8, 0x0e950, 0x06aa0,
+            0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
+            0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b5a0, 0x195a6,
+            0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
+            0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
+            0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
+            0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+            0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
+            0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
+            0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0
+        ];
+
+        const Gan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+        const Zhi = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+        const Animals = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
+        const lunarMonths = ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "腊月"];
+        const lunarDays = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+                          "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+                          "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+
+        // 公历转农历函数（修正版）
+        function solarToLunar(date) {
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            // 计算与1900年1月31日的时间差（天数）
+            let offset = Math.floor((Date.UTC(year, month - 1, day) - Date.UTC(1900, 0, 31)) / 86400000);
+            
+            let lunarYear, lunarMonth, lunarDay;
+            let isLeap = false;
+            
+            // 计算农历年份
+            for (lunarYear = 1900; lunarYear < 2100 && offset > 0; lunarYear++) {
+                const daysInYear = lYearDays(lunarYear);
+                if (offset < daysInYear) break;
+                offset -= daysInYear;
+            }
+            
+            if (offset < 0) {
+                offset += lYearDays(lunarYear);
+                lunarYear--;
+            }
+            
+            // 计算农历月份
+            const leapMonth = getLeapMonth(lunarYear);
+            for (lunarMonth = 1; lunarMonth < 13 && offset > 0; lunarMonth++) {
+                // 处理闰月
+                if (leapMonth > 0 && lunarMonth === leapMonth + 1 && !isLeap) {
+                    lunarMonth--;
+                    isLeap = true;
+                    const daysInLeapMonth = leapDays(lunarYear);
+                    if (offset < daysInLeapMonth) break;
+                    offset -= daysInLeapMonth;
+                }
+                
+                const daysInMonth = monthDays(lunarYear, lunarMonth);
+                if (offset < daysInMonth) break;
+                offset -= daysInMonth;
+                
+                if (isLeap && lunarMonth === leapMonth + 1) isLeap = false;
+            }
+            
+            // 如果offset刚好为0，且当前是闰月，需要调整
+            if (offset === 0 && leapMonth > 0 && lunarMonth === leapMonth + 1) {
+                if (isLeap) {
+                    isLeap = false;
+                } else {
+                    isLeap = true;
+                    lunarMonth--;
+                }
+            }
+            
+            if (offset < 0) {
+                offset += monthDays(lunarYear, lunarMonth);
+                lunarMonth--;
+            }
+            
+            lunarDay = offset + 1;
+            
+            return {
+                year: lunarYear,
+                month: lunarMonth,
+                day: lunarDay,
+                isLeap: isLeap,
+                zodiac: Animals[(lunarYear - 4) % 12],
+                ganZhiYear: getGanZhi(lunarYear)
+            };
+        }
+        
+        function lYearDays(y) {
+            let sum = 348; // 29天*12个月
+            for (let i = 0x8000; i > 0x8; i >>= 1) {
+                sum += (lunarInfo[y - 1900] & i) ? 1 : 0;
+            }
+            return sum + leapDays(y);
+        }
+        
+        function leapDays(y) {
+            if (getLeapMonth(y)) {
+                return (lunarInfo[y - 1900] & 0x10000) ? 30 : 29;
+            }
+            return 0;
+        }
+        
+        function getLeapMonth(y) {
+            return lunarInfo[y - 1900] & 0xf;
+        }
+        
+        function monthDays(y, m) {
+            return (lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29;
+        }
+        
+        function getGanZhi(year) {
+            return Gan[(year - 4) % 10] + Zhi[(year - 4) % 12];
+        }
+
+        // 更新时间函数（带翻页效果）
+        function updateTimeWithFlip(elementId, newValue, oldValue) {
+            const element = document.getElementById(elementId);
+            
+            // 如果值没变化，直接返回
+            if (newValue === oldValue) return;
+            
+            // 确保值是两位数
+            newValue = newValue.toString().padStart(2, '0');
+            oldValue = oldValue.toString().padStart(2, '0');
+            
+            // 创建翻页动画
+            element.innerHTML = `
+                <div class="flip-digit" style="transform: translateY(-30px);">${oldValue}</div>
+                <div class="flip-digit" style="transform: translateY(0px);">${newValue}</div>
+            `;
+            
+            // 动画结束后更新为静态显示
+            setTimeout(() => {
+                element.innerHTML = `
+                    <div class="flip-digit">${newValue}</div>
+                `;
+            }, 500);
+        }
+
+        // 更新日期时间函数
+        function updateDateTime() {
+            const now = new Date();
+            
+            // 公历日期
+            const gregorianDate = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+            document.getElementById('gregorian-date').textContent = gregorianDate;
+            
+            // 星期
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            document.getElementById('week-day').textContent = weekDays[now.getDay()];
+            
+            // 农历日期（修正版）
+            const lunar = solarToLunar(now);
+            const lunarDateStr = `${lunar.isLeap ? '闰' : ''}${lunarMonths[lunar.month - 1]}${lunarDays[lunar.day - 1]}`;
+            document.getElementById('lunar-date').textContent = lunarDateStr;
+            document.getElementById('lunar-year').textContent = `${lunar.ganZhiYear}年 ${lunar.zodiac}`;
+            
+            // 时间（带翻页效果）
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            
+            // 获取旧值
+            const oldHours = document.getElementById('hours').textContent || '00';
+            const oldMinutes = document.getElementById('minutes').textContent || '00';
+            const oldSeconds = document.getElementById('seconds').textContent || '00';
+            
+            // 更新带翻页效果
+            updateTimeWithFlip('hours', hours, oldHours);
+            updateTimeWithFlip('minutes', minutes, oldMinutes);
+            updateTimeWithFlip('seconds', seconds, oldSeconds);
+            
+            // 倒计时计算
+            const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() + (7 - now.getDay()));
+            endOfWeek.setHours(23, 59, 59, 999);
+            
+            const yearDiff = endOfYear - now;
+            const monthDiff = endOfMonth - now;
+            const weekDiff = endOfWeek - now;
+            
+            const yearDays = Math.ceil(yearDiff / (1000 * 60 * 60 * 24));
+            const monthDays = Math.ceil(monthDiff / (1000 * 60 * 60 * 24));
+            const weekDaysRemaining = Math.ceil(weekDiff / (1000 * 60 * 60 * 24));
+            
+            document.getElementById('year-countdown').textContent = `${yearDays}天`;
+            document.getElementById('month-remaining').textContent = `${monthDays}天`;
+            document.getElementById('week-remaining').textContent = `${weekDaysRemaining}天`;
+            
+            // 今年已过时间
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const yearPassed = now - startOfYear;
+            const yearTotal = endOfYear - startOfYear;
+            const percentage = (yearPassed / yearTotal * 100).toFixed(2);
+            document.getElementById('year-passed').textContent = `${percentage}%`;
+        }
+
+        // 初始化并每秒更新
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+    </script>
 </body>
 </html>
