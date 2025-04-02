@@ -26,7 +26,7 @@
         }
         .panel {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -39,34 +39,60 @@
         .title {
             font-size: 14px;
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
+            white-space: nowrap;
         }
         .content {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: #333;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .time-panel {
+            flex: 1.5;
         }
         .flip-clock {
             display: inline-flex;
             position: relative;
-            width: 24px;
-            height: 30px;
+            width: 28px;
+            height: 40px;
             overflow: hidden;
+            font-size: 24px;
+            margin: 0 2px;
         }
         .flip-digit {
             position: absolute;
             width: 100%;
             text-align: center;
-            line-height: 30px;
+            line-height: 40px;
             transition: transform 0.5s ease;
         }
         .flip-container {
             display: flex;
             align-items: center;
-            gap: 2px;
+            justify-content: center;
+            height: 100%;
         }
         .flip-separator {
+            font-size: 24px;
             margin: 0 2px;
+            color: #333;
+        }
+        .time-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .date-display {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+        .week-display {
+            font-size: 16px;
+            color: #2a5caa;
         }
     </style>
 </head>
@@ -74,19 +100,21 @@
     <div class="container">
         <div class="panel">
             <div class="title">公历日期</div>
-            <div class="content" id="gregorian-date"></div>
-            <div class="title">星期</div>
-            <div class="content" id="week-day"></div>
+            <div class="content">
+                <div class="date-display" id="gregorian-date"></div>
+                <div class="week-display" id="week-day"></div>
+            </div>
         </div>
         <div class="panel">
             <div class="title">农历日期</div>
-            <div class="content" id="lunar-date"></div>
-            <div class="title">农历年份</div>
-            <div class="content" id="lunar-year"></div>
-        </div>
-        <div class="panel">
-            <div class="title">当前时间</div>
             <div class="content">
+                <div class="date-display" id="lunar-date"></div>
+                <div id="lunar-year"></div>
+            </div>
+        </div>
+        <div class="panel time-panel">
+            <div class="time-display">
+                <div class="title">当前时间</div>
                 <div class="flip-container">
                     <div class="flip-clock" id="hours"></div>
                     <span class="flip-separator">:</span>
@@ -97,15 +125,15 @@
             </div>
         </div>
         <div class="panel">
-            <div class="title">今年倒计时</div>
+            <div class="title">今年剩余天数</div>
             <div class="content" id="year-countdown"></div>
-            <div class="title">本月剩余</div>
+            <div class="title">本月剩余天数</div>
             <div class="content" id="month-remaining"></div>
         </div>
         <div class="panel">
-            <div class="title">本周剩余</div>
+            <div class="title">本周剩余天数</div>
             <div class="content" id="week-remaining"></div>
-            <div class="title">今年已过</div>
+            <div class="title">今年已过百分比</div>
             <div class="content" id="year-passed"></div>
         </div>
     </div>
@@ -143,25 +171,25 @@
             const year = date.getFullYear();
             const month = date.getMonth() + 1;
             const day = date.getDate();
-            
+
             // 计算与1900年1月31日的时间差（天数）
             let offset = Math.floor((Date.UTC(year, month - 1, day) - Date.UTC(1900, 0, 31)) / 86400000);
-            
+
             let lunarYear, lunarMonth, lunarDay;
             let isLeap = false;
-            
+
             // 计算农历年份
             for (lunarYear = 1900; lunarYear < 2100 && offset > 0; lunarYear++) {
                 const daysInYear = lYearDays(lunarYear);
                 if (offset < daysInYear) break;
                 offset -= daysInYear;
             }
-            
+
             if (offset < 0) {
                 offset += lYearDays(lunarYear);
                 lunarYear--;
             }
-            
+
             // 计算农历月份
             const leapMonth = getLeapMonth(lunarYear);
             for (lunarMonth = 1; lunarMonth < 13 && offset > 0; lunarMonth++) {
@@ -173,14 +201,14 @@
                     if (offset < daysInLeapMonth) break;
                     offset -= daysInLeapMonth;
                 }
-                
+
                 const daysInMonth = monthDays(lunarYear, lunarMonth);
                 if (offset < daysInMonth) break;
                 offset -= daysInMonth;
-                
+
                 if (isLeap && lunarMonth === leapMonth + 1) isLeap = false;
             }
-            
+
             // 如果offset刚好为0，且当前是闰月，需要调整
             if (offset === 0 && leapMonth > 0 && lunarMonth === leapMonth + 1) {
                 if (isLeap) {
@@ -190,14 +218,14 @@
                     lunarMonth--;
                 }
             }
-            
+
             if (offset < 0) {
                 offset += monthDays(lunarYear, lunarMonth);
                 lunarMonth--;
             }
-            
+
             lunarDay = offset + 1;
-            
+
             return {
                 year: lunarYear,
                 month: lunarMonth,
@@ -207,7 +235,7 @@
                 ganZhiYear: getGanZhi(lunarYear)
             };
         }
-        
+
         function lYearDays(y) {
             let sum = 348; // 29天*12个月
             for (let i = 0x8000; i > 0x8; i >>= 1) {
@@ -215,22 +243,22 @@
             }
             return sum + leapDays(y);
         }
-        
+
         function leapDays(y) {
             if (getLeapMonth(y)) {
                 return (lunarInfo[y - 1900] & 0x10000) ? 30 : 29;
             }
             return 0;
         }
-        
+
         function getLeapMonth(y) {
             return lunarInfo[y - 1900] & 0xf;
         }
-        
+
         function monthDays(y, m) {
             return (lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29;
         }
-        
+
         function getGanZhi(year) {
             return Gan[(year - 4) % 10] + Zhi[(year - 4) % 12];
         }
@@ -238,20 +266,20 @@
         // 更新时间函数（带翻页效果）
         function updateTimeWithFlip(elementId, newValue, oldValue) {
             const element = document.getElementById(elementId);
-            
+
             // 如果值没变化，直接返回
             if (newValue === oldValue) return;
-            
+
             // 确保值是两位数
             newValue = newValue.toString().padStart(2, '0');
             oldValue = oldValue.toString().padStart(2, '0');
-            
+
             // 创建翻页动画
             element.innerHTML = `
-                <div class="flip-digit" style="transform: translateY(-30px);">${oldValue}</div>
+                <div class="flip-digit" style="transform: translateY(-40px);">${oldValue}</div>
                 <div class="flip-digit" style="transform: translateY(0px);">${newValue}</div>
             `;
-            
+
             // 动画结束后更新为静态显示
             setTimeout(() => {
                 element.innerHTML = `
@@ -260,58 +288,70 @@
             }, 500);
         }
 
+        // 计算两个日期之间的完整天数（去掉当天）
+        function getFullDaysBetweenDates(startDate, endDate) {
+            // 将时间都设置为午夜0点
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setHours(0, 0, 0, 0);
+
+            // 计算完整天数差
+            const diffTime = end - start;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            return diffDays > 0 ? diffDays : 0;
+        }
+
         // 更新日期时间函数
         function updateDateTime() {
             const now = new Date();
-            
-            // 公历日期
-            const gregorianDate = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+
+            // 公历日期 - 显示更完整
+            const gregorianDate = `${now.getFullYear()}年${(now.getMonth() + 1).toString().padStart(2, '0')}月${now.getDate().toString().padStart(2, '0')}日`;
             document.getElementById('gregorian-date').textContent = gregorianDate;
-            
+
             // 星期
             const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             document.getElementById('week-day').textContent = weekDays[now.getDay()];
-            
+
             // 农历日期（修正版）
             const lunar = solarToLunar(now);
             const lunarDateStr = `${lunar.isLeap ? '闰' : ''}${lunarMonths[lunar.month - 1]}${lunarDays[lunar.day - 1]}`;
             document.getElementById('lunar-date').textContent = lunarDateStr;
             document.getElementById('lunar-year').textContent = `${lunar.ganZhiYear}年 ${lunar.zodiac}`;
-            
+
             // 时间（带翻页效果）
             const hours = now.getHours();
             const minutes = now.getMinutes();
             const seconds = now.getSeconds();
-            
+
             // 获取旧值
             const oldHours = document.getElementById('hours').textContent || '00';
             const oldMinutes = document.getElementById('minutes').textContent || '00';
             const oldSeconds = document.getElementById('seconds').textContent || '00';
-            
+
             // 更新带翻页效果
             updateTimeWithFlip('hours', hours, oldHours);
             updateTimeWithFlip('minutes', minutes, oldMinutes);
             updateTimeWithFlip('seconds', seconds, oldSeconds);
-            
-            // 倒计时计算
+
+            // 倒计时计算（去掉当天）
             const endOfYear = new Date(now.getFullYear() + 1, 0, 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
             const endOfWeek = new Date(now);
             endOfWeek.setDate(now.getDate() + (7 - now.getDay()));
-            endOfWeek.setHours(23, 59, 59, 999);
-            
-            const yearDiff = endOfYear - now;
-            const monthDiff = endOfMonth - now;
-            const weekDiff = endOfWeek - now;
-            
-            const yearDays = Math.ceil(yearDiff / (1000 * 60 * 60 * 24));
-            const monthDays = Math.ceil(monthDiff / (1000 * 60 * 60 * 24));
-            const weekDaysRemaining = Math.ceil(weekDiff / (1000 * 60 * 60 * 24));
-            
+            endOfWeek.setHours(0, 0, 0, 0);
+
+            // 计算完整剩余天数（不包含当天）
+            const yearDays = getFullDaysBetweenDates(now, endOfYear);
+            const monthDays = getFullDaysBetweenDates(now, endOfMonth);
+            const weekDaysRemaining = getFullDaysBetweenDates(now, endOfWeek);
+
             document.getElementById('year-countdown').textContent = `${yearDays}天`;
             document.getElementById('month-remaining').textContent = `${monthDays}天`;
             document.getElementById('week-remaining').textContent = `${weekDaysRemaining}天`;
-            
+
             // 今年已过时间
             const startOfYear = new Date(now.getFullYear(), 0, 1);
             const yearPassed = now - startOfYear;
