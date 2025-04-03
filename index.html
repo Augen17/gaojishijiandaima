@@ -14,6 +14,7 @@
             align-items: center;
             height: 100vh;
             background-color: #f5f5f5;
+            padding-bottom: 20px;
         }
 
         .container {
@@ -39,6 +40,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin-top: -13px;
         }
 
         .date-info {
@@ -48,23 +50,33 @@
         }
 
         .weekday {
-            font-size: 18px;
-            margin-bottom: 3px;
+            font-size: 14px;
+            margin-bottom: 2px;
             color: #555;
             font-weight: bold;
         }
 
         .lunar-date {
-            font-size: 16px;
+            font-size: 14px;
             color: #e74c3c;
             font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .festival-today {
+            font-size: 14px;
+            color: #e67e22;
+            font-weight: bold;
+            margin-top: 2px;
+            margin-bottom: 2px;
         }
 
         .time-display {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 5px;
+            margin-top: 3px;
+            margin-bottom: -9px;
         }
 
         .flip-container {
@@ -180,6 +192,8 @@
                 <div class="date-info" id="gregorian-date"></div>
                 <div class="weekday" id="weekday"></div>
                 <div class="lunar-date" id="lunar-date"></div>
+                <!-- 添加节日显示 -->
+                <div class="festival-today" id="festival-today"></div>
             </div>
 
             <div class="time-display">
@@ -377,6 +391,45 @@
             }
         }
 
+        // 判断当天是否为节日
+        function isFestivalToday(date) {
+            const day = date.getDate();
+            const month = date.getMonth();
+            const year = date.getFullYear();
+
+            // 2024年节日
+            if (year === 2024) {
+                // 国庆节
+                if (month === 9 && day === 1) return "国庆节";
+                // 重阳节 (2024年10月13日)
+                if (month === 9 && day === 13) return "重阳节";
+            }
+
+            // 2025年节日
+            if (year === 2025) {
+                // 元旦
+                if (month === 0 && day === 1) return "元旦";
+                // 春节 (2025年1月29日)
+                if (month === 0 && day === 29) return "春节";
+                // 元宵节 (2025年2月12日)
+                if (month === 1 && day === 12) return "元宵节";
+                // 清明节 (2025年4月4日)
+                if (month === 3 && day === 4) return "清明节";
+                // 劳动节
+                if (month === 4 && day === 1) return "劳动节";
+                // 端午节 (2025年6月26日)
+                if (month === 5 && day === 26) return "端午节";
+                // 中秋节 (2025年10月6日)
+                if (month === 9 && day === 6) return "中秋节";
+                // 国庆节
+                if (month === 9 && day === 1) return "国庆节";
+                // 重阳节 (2025年10月23日)
+                if (month === 9 && day === 23) return "重阳节";
+            }
+
+            return null;
+        }
+
         // 存储上一次的时间值
         const lastValues = {
             'hour-tens': -1,
@@ -424,6 +477,17 @@
 
             // 更新农历日期
             document.getElementById('lunar-date').textContent = getLunarDate(now);
+
+            // 更新当天节日信息
+            const todayFestival = isFestivalToday(now);
+            const festivalTodayElement = document.getElementById('festival-today');
+
+            if (todayFestival) {
+                festivalTodayElement.textContent = `今天是 ${todayFestival}`;
+                festivalTodayElement.style.display = 'block';
+            } else {
+                festivalTodayElement.style.display = 'none';
+            }
 
             // 更新时间翻页效果
             const hours = now.getHours();
