@@ -346,7 +346,11 @@
             if (ganYear === 0) ganYear = 10;
             if (zhiYear === 0) zhiYear = 12;
 
-            return `${Gan[ganYear - 1]}${Zhi[zhiYear - 1]}年 ${lunarMonths[month - 1]}月${lunarDays[day - 1]}`;
+            // 计算生肖
+            let animalYear = (year - 4) % 12;
+            if (animalYear < 0) animalYear += 12;
+
+            return `${Gan[ganYear - 1]}${Zhi[zhiYear - 1]}年 ${Animals[animalYear]}年 ${lunarMonths[month - 1]}月${lunarDays[day - 1]}`;
 
             // 辅助函数
             function getLunarYearDays(y) {
@@ -468,8 +472,9 @@
 
             // 计算本周剩余天数
             const dayOfWeek = now.getDay(); // 0是周日，6是周六
-            const daysUntilEndOfWeek = 6 - dayOfWeek; // 假设周日为一周的开始
-            const percentWeekRemaining = (daysUntilEndOfWeek / 6) * 100;
+            // 修正计算逻辑，周日显示为7天剩余
+            const daysUntilEndOfWeek = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+            const percentWeekRemaining = (daysUntilEndOfWeek / 7) * 100;
 
             document.getElementById('week-remaining').textContent =
                 `${daysUntilEndOfWeek}天 (${percentWeekRemaining.toFixed(1)}%)`;
