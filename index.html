@@ -28,7 +28,7 @@
         }
 
         .time-date-section {
-            width: 240px;
+            width: 220px; /* 从240px减小到220px */
             padding: 10px;
             border-right: 1px solid #eee;
             display: flex;
@@ -121,6 +121,7 @@
         .countdown-section {
             flex-grow: 1;
             padding: 10px;
+            width: 320px; /* 增加宽度 */
         }
 
         .countdown-item {
@@ -136,12 +137,16 @@
         .countdown-label {
             color: #333;
             font-size: 11px;
+            white-space: nowrap; /* 防止标签换行 */
         }
 
         .countdown-value {
             color: #3498db;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 12px; /* 从14px调小到12px */
+            white-space: nowrap; /* 防止值换行 */
+            text-align: right;
+            margin-left: 5px;
         }
 
         .progress-bar {
@@ -483,7 +488,7 @@
             const festivalTodayElement = document.getElementById('festival-today');
 
             if (todayFestival) {
-                festivalTodayElement.textContent = `今天是 ${todayFestival}`;
+                festivalTodayElement.textContent = `${todayFestival}`;
                 festivalTodayElement.style.display = 'block';
             } else {
                 festivalTodayElement.style.display = 'none';
@@ -519,29 +524,44 @@
 
             const daysInYear = remainingInYear / (1000 * 60 * 60 * 24);
             const hoursInYear = (remainingInYear % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+            const minutesInYear = (remainingInYear % (1000 * 60 * 60)) / (1000 * 60);
+            const secondsInYear = (remainingInYear % (1000 * 60)) / 1000;
 
             document.getElementById('year-remaining').textContent =
-                `${Math.floor(daysInYear)}天 ${Math.floor(hoursInYear)}时 (${percentYearRemaining.toFixed(1)}%)`;
+                `${Math.floor(daysInYear)}天${Math.floor(hoursInYear)}时${Math.floor(minutesInYear)}分${Math.floor(secondsInYear)}秒(${percentYearRemaining.toFixed(1)}%)`;
             document.getElementById('year-progress').style.width = `${percentYearRemaining}%`;
 
             // 计算本月剩余天数
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            const remainingDaysInMonth = endOfMonth.getDate() - now.getDate();
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            const remainingInMonth = endOfMonth - now;
             const totalDaysInMonth = endOfMonth.getDate();
-            const percentMonthRemaining = (remainingDaysInMonth / totalDaysInMonth) * 100;
+            const percentMonthRemaining = (remainingInMonth / (totalDaysInMonth * 24 * 60 * 60 * 1000)) * 100;
+
+            const daysInMonth = remainingInMonth / (1000 * 60 * 60 * 24);
+            const hoursInMonth = (remainingInMonth % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+            const minutesInMonth = (remainingInMonth % (1000 * 60 * 60)) / (1000 * 60);
+            const secondsInMonth = (remainingInMonth % (1000 * 60)) / 1000;
 
             document.getElementById('month-remaining').textContent =
-                `${remainingDaysInMonth}天 (${percentMonthRemaining.toFixed(1)}%)`;
+                `${Math.floor(daysInMonth)}天${Math.floor(hoursInMonth)}时${Math.floor(minutesInMonth)}分${Math.floor(secondsInMonth)}秒(${percentMonthRemaining.toFixed(1)}%)`;
             document.getElementById('month-progress').style.width = `${percentMonthRemaining}%`;
 
             // 计算本周剩余天数
             const dayOfWeek = now.getDay(); // 0是周日，6是周六
-            // 修正计算逻辑，周日显示为7天剩余
-            const daysUntilEndOfWeek = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
-            const percentWeekRemaining = (daysUntilEndOfWeek / 7) * 100;
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(endOfWeek.getDate() + (dayOfWeek === 0 ? 7 : 7 - dayOfWeek));
+            endOfWeek.setHours(23, 59, 59, 999);
+
+            const remainingInWeek = endOfWeek - now;
+            const percentWeekRemaining = (remainingInWeek / (7 * 24 * 60 * 60 * 1000)) * 100;
+
+            const daysInWeek = remainingInWeek / (1000 * 60 * 60 * 24);
+            const hoursInWeek = (remainingInWeek % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+            const minutesInWeek = (remainingInWeek % (1000 * 60 * 60)) / (1000 * 60);
+            const secondsInWeek = (remainingInWeek % (1000 * 60)) / 1000;
 
             document.getElementById('week-remaining').textContent =
-                `${daysUntilEndOfWeek}天 (${percentWeekRemaining.toFixed(1)}%)`;
+                `${Math.floor(daysInWeek)}天${Math.floor(hoursInWeek)}时${Math.floor(minutesInWeek)}分${Math.floor(secondsInWeek)}秒(${percentWeekRemaining.toFixed(1)}%)`;
             document.getElementById('week-progress').style.width = `${percentWeekRemaining}%`;
 
             // 计算今年已过去的时间
@@ -549,8 +569,12 @@
             const percentYearPassed = (passedInYear / totalYearTime) * 100;
 
             const daysPassed = passedInYear / (1000 * 60 * 60 * 24);
+            const hoursPassed = (passedInYear % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+            const minutesPassed = (passedInYear % (1000 * 60 * 60)) / (1000 * 60);
+            const secondsPassed = (passedInYear % (1000 * 60)) / 1000;
+
             document.getElementById('year-passed').textContent =
-                `${Math.floor(daysPassed)}天 (${percentYearPassed.toFixed(1)}%)`;
+                `${Math.floor(daysPassed)}天${Math.floor(hoursPassed)}时${Math.floor(minutesPassed)}分${Math.floor(secondsPassed)}秒(${percentYearPassed.toFixed(1)}%)`;
             document.getElementById('year-passed-progress').style.width = `${percentYearPassed}%`;
 
             // 计算今日已过去的时间
@@ -559,9 +583,12 @@
             const totalDayTime = 24 * 60 * 60 * 1000;
             const percentDayPassed = (passedInDay / totalDayTime) * 100;
 
-            const hoursPassed = passedInDay / (1000 * 60 * 60);
+            const hoursPassedToday = passedInDay / (1000 * 60 * 60);
+            const minutesPassedToday = (passedInDay % (1000 * 60 * 60)) / (1000 * 60);
+            const secondsPassedToday = (passedInDay % (1000 * 60)) / 1000;
+
             document.getElementById('day-passed').textContent =
-                `${Math.floor(hoursPassed)}小时 (${percentDayPassed.toFixed(1)}%)`;
+                `${Math.floor(hoursPassedToday)}时${Math.floor(minutesPassedToday)}分${Math.floor(secondsPassedToday)}秒(${percentDayPassed.toFixed(1)}%)`;
             document.getElementById('day-progress').style.width = `${percentDayPassed}%`;
         }
 
