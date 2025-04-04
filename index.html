@@ -178,8 +178,8 @@
             background-color: #3498db;
         }
 
-        .progress-day-passed {
-            background-color: #e74c3c;
+        .progress-day-remaining {
+            background-color: #f39c12;
         }
 
         .percent-display {
@@ -277,11 +277,11 @@
 
             <div class="countdown-item">
                 <div class="countdown-header">
-                    <span class="countdown-label">今日已过去:</span>
-                    <span class="countdown-value" id="day-passed"></span>
+                    <span class="countdown-label">今日剩余时间:</span>
+                    <span class="countdown-value" id="day-remaining"></span>
                 </div>
                 <div class="progress-bar">
-                    <div class="progress progress-day-passed" id="day-progress"></div>
+                    <div class="progress progress-day-remaining" id="day-remaining-progress"></div>
                 </div>
             </div>
         </div>
@@ -577,19 +577,19 @@
                 `${Math.floor(daysPassed)}天${Math.floor(hoursPassed)}时${Math.floor(minutesPassed)}分${Math.floor(secondsPassed)}秒(${percentYearPassed.toFixed(1)}%)`;
             document.getElementById('year-passed-progress').style.width = `${percentYearPassed}%`;
 
-            // 计算今日已过去的时间
-            const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const passedInDay = now - startOfDay;
+            // 计算今日剩余时间（替代今日已过去）
+            const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            const remainingInDay = endOfDay - now;
             const totalDayTime = 24 * 60 * 60 * 1000;
-            const percentDayPassed = (passedInDay / totalDayTime) * 100;
+            const percentDayRemaining = (remainingInDay / totalDayTime) * 100;
 
-            const hoursPassedToday = passedInDay / (1000 * 60 * 60);
-            const minutesPassedToday = (passedInDay % (1000 * 60 * 60)) / (1000 * 60);
-            const secondsPassedToday = (passedInDay % (1000 * 60)) / 1000;
+            const hoursRemaining = remainingInDay / (1000 * 60 * 60);
+            const minutesRemaining = (remainingInDay % (1000 * 60 * 60)) / (1000 * 60);
+            const secondsRemaining = (remainingInDay % (1000 * 60)) / 1000;
 
-            document.getElementById('day-passed').textContent =
-                `${Math.floor(hoursPassedToday)}时${Math.floor(minutesPassedToday)}分${Math.floor(secondsPassedToday)}秒(${percentDayPassed.toFixed(1)}%)`;
-            document.getElementById('day-progress').style.width = `${percentDayPassed}%`;
+            document.getElementById('day-remaining').textContent =
+                `${Math.floor(hoursRemaining)}时${Math.floor(minutesRemaining)}分${Math.floor(secondsRemaining)}秒(${percentDayRemaining.toFixed(1)}%)`;
+            document.getElementById('day-remaining-progress').style.width = `${percentDayRemaining}%`;
         }
 
         // 初始化并定时更新
